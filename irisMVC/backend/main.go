@@ -16,13 +16,11 @@ func main() {
 	app := iris.New()
 	app.Logger().SetLevel("debug")
 
-	template := iris.HTML("./backend/web/views", ".html").Layout(
+	template := iris.HTML("./irisMVC/backend/web/views", ".html").Layout(
 		"shared/layout.html").Reload(
 			true)
 	app.RegisterView(template)
-
-	app.HandleDir("/assets", iris.Dir("./backend/web/assets"))
-
+	app.HandleDir("/assets", iris.Dir("./irisMVC/backend/web/assets"))
 	app.OnAnyErrorCode(func(ctx iris.Context) {
 		ctx.ViewData("message", ctx.Values().GetStringDefault("message", "Unknown Error has occurred!"))
 		ctx.ViewLayout("")
@@ -45,10 +43,21 @@ func main() {
 	product.Register(ctx, productService)
 	product.Handle(new(controllers.ProductController))
 
-	app.Run(
+	orderRepository := repositories.NewOrderManagerRepository("order", db)
+	orderService := service.NewOrderService(orderRepository)
+	orderParty := app.Party("/order")
+	order := mvc.New(orderParty)
+	order.Register(ctx, orderService)
+	order.Handle(new(controllers.OrderController))
+
+	err = app.Run(
 		iris.Addr("localhost:8080"),
 		iris.WithoutServerError(iris.ErrServerClosed),
-		iris.WithOptimizations)
+		iris.WithOptimizations,
+		)
+	if err != nil {
+		app.Logger().Print("Running error")
+		app.Logger().Print(err)
+		return
+	}
 }
-
-

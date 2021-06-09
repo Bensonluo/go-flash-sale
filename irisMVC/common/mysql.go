@@ -7,7 +7,7 @@ import (
 
 //create mysql connection
 func NewMysqlConn() (db *sql.DB, err error) {
-	db, err = sql.Open("mysql", "root:mysql@tcp(127.0.0.1:3306)/mysql?charset=utf8")
+	db, err = sql.Open("mysql", "bensonl:bensonl@tcp(127.0.0.1:3306)/sales?charset=utf8")
 	return
 }
 

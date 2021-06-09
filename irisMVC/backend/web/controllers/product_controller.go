@@ -48,7 +48,7 @@ func (p *ProductController) GetAdd() mvc.View {
 func (p *ProductController) PostAdd() {
 	product := &datamodels.Product {}
 	p.Ctx.Request().ParseForm()
-	dec := common.NewDecoder(&common.DecoderOptions{ TagName:"bensonl" })
+	dec := common.NewDecoder(&common.DecoderOptions{ TagName:"sales" })
 	if err := dec.Decode(p.Ctx.Request().Form,product); err != nil {
 		p.Ctx.Application().Logger().Debug(err)
 	}
