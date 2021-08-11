@@ -44,7 +44,7 @@ func (p *ProductManager) Insert(product *datamodels.Product) (productID int64, e
 		return
 	}
 
-	sql :="INSERT product SET productName=?, productNum=?, productImage=?, productUrl=?"
+	sql :="INSERT product SET productName=?, productPrice=?, productNum=?, productImage=?, productUrl=?"
 	stmt,errSql := p.mysqlConn.Prepare(sql)
 	defer stmt.Close()
 	if errSql !=nil {
@@ -53,6 +53,7 @@ func (p *ProductManager) Insert(product *datamodels.Product) (productID int64, e
 
 	result, errStmt := stmt.Exec(
 		product.ProductName,
+		product.ProductPrice,
 		product.ProductNum,
 		product.ProductImage,
 		product.ProductUrl)
@@ -86,7 +87,7 @@ func (p *ProductManager)Update(product *datamodels.Product) error {
 		return err
 	}
 
-	sql := "Update product set productName=?,productNum=?,productImage=?,productUrl=? where ID=" + strconv.FormatInt(product.ID,10)
+	sql := "Update product set productName=?,productNum=?,productPrice=?,productImage=?,productUrl=? where ID=" + strconv.FormatInt(product.ID,10)
 	stmt, err := p.mysqlConn.Prepare(sql)
 	defer stmt.Close()
 	if err != nil {
@@ -95,6 +96,7 @@ func (p *ProductManager)Update(product *datamodels.Product) error {
 
 	_, err = stmt.Exec(
 		product.ProductName,
+		product.ProductPrice,
 		product.ProductNum,
 		product.ProductImage,
 		product.ProductUrl)
