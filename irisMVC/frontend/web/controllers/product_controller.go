@@ -6,6 +6,9 @@ import (
 	"github.com/kataras/iris/v12/sessions"
 	"go-flash-sale/irisMVC/datamodels"
 	"go-flash-sale/irisMVC/service"
+	"html/template"
+	"os"
+	"path/filepath"
 	"strconv"
 )
 
@@ -14,6 +17,50 @@ type ProductController struct {
 	ProductService service.IProductService
 	OrderService service.IOrderService
 	Session *sessions.Session
+}
+
+var (
+	htmlOutPath = "./irisMVC/frontend/web/htmlProductShow/"
+	templatePath = "./irisMVC/frontend/web/views/template/" //static files
+	)
+
+func (p *ProductController) GetGenerateHtml() {
+	contentTmp, err := template.ParseFiles(filepath.Join(templatePath, "product.html"))
+	if err != nil {
+		p.Ctx.Application().Logger().Error(err)
+	}
+	fileName := filepath.Join(htmlOutPath, "htmlProduct.html")
+
+	productString := p.Ctx.URLParam("productID")
+	productID, err := strconv.Atoi(productString)
+	if err != nil {
+		p.Ctx.Application().Logger().Debug(err)
+	}
+	product, err := p.ProductService.GetProductByID(int64(productID))
+	if err != nil {
+		p.Ctx.Application().Logger().Debug(err)
+	}
+	generateStaticHtml(p.Ctx, contentTmp, fileName, product)
+}
+
+func generateStaticHtml(ctx iris.Context, template *template.Template, fileName string, product *datamodels.Product) {
+	if isExist(fileName) {
+		err := os.Remove(fileName)
+		if err != nil {
+			ctx.Application().Logger().Error(err)
+		}
+	}
+	file, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY, os.ModePerm)
+	if err != nil {
+		ctx.Application().Logger().Error(err)
+	}
+	defer file.Close()
+	template.Execute(file, &product)
+}
+
+func isExist(fileName string) bool {
+	_, err := os.Stat(fileName)
+	return err==nil || os.IsExist(err)
 }
 
 func (p *ProductController) GetDetail() mvc.View {

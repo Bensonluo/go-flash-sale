@@ -9,9 +9,6 @@ import (
 	"go-flash-sale/irisMVC/frontend/web/controllers"
 	"go-flash-sale/irisMVC/repositories"
 	"go-flash-sale/irisMVC/service"
-
-	"github.com/kataras/iris/v12/sessions"
-	"time"
 )
 
 func main() {
@@ -21,6 +18,7 @@ func main() {
 	template := iris.HTML("./irisMVC/frontend/web/views", ".html").Layout("shared/layout.html").Reload(true)
 	app.RegisterView(template)
 
+	//app.StaticWeb
 	app.HandleDir("/public", iris.Dir("./irisMVC/frontend/web/public"))
 	app.HandleDir("/html", iris.Dir("./irisMVC/frontend/web/htmlProductShow"))
 
@@ -34,17 +32,13 @@ func main() {
 	if err != nil {
 
 	}
-	sess := sessions.New(sessions.Config{
-		Cookie:"AdminCookie",
-		Expires:600*time.Minute,
-	})
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	user := repositories.NewUserRepository("user", db)
 	userService := service.NewService(user)
 	userPro := mvc.New(app.Party("/user"))
-	userPro.Register(userService, ctx,sess.Start)
+	userPro.Register(userService, ctx)
 	userPro.Handle(new(controllers.UserController))
 
 	order := repositories.NewOrderManagerRepository("order", db)
@@ -56,7 +50,7 @@ func main() {
 	pro := mvc.New(proProduct)
 	proProduct.Use(middleware.AuthConProduct)
 
-	pro.Register(productService, orderService, sess.Start)
+	pro.Register(productService, orderService)
 	pro.Handle(new(controllers.ProductController))
 
 	app.Run(
