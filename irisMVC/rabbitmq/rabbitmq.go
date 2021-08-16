@@ -1,9 +1,13 @@
 package rabbitmq
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/streadway/amqp"
+	"go-flash-sale/irisMVC/datamodels"
+	"go-flash-sale/irisMVC/service"
 	"log"
+	"sync"
 )
 
 const MQURL = "amqp://admin:admin@127.0.0.1:5672/Bensonl"
@@ -15,6 +19,7 @@ type RabbitMQ struct {
 	Exchange string
 	Key string
 	Mqurl string
+	sync.Mutex
 }
 
 func NewRabbitMQ(queueName string, exchange string, key string) *RabbitMQ {
@@ -49,7 +54,9 @@ func NewRabbitMQSimple(queueName string) *RabbitMQ {
 
 }
 
-func (r *RabbitMQ) PublishSimple(message string) {
+func (r *RabbitMQ) PublishSimple(message string) error {
+	r.Lock()
+	defer r.Unlock()
 	//apply for queue
 	_, err := r.channel.QueueDeclare(
 		r.QueueName,
@@ -59,7 +66,7 @@ func (r *RabbitMQ) PublishSimple(message string) {
 		false,
 		nil)
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
 
 	r.channel.Publish(
@@ -71,9 +78,13 @@ func (r *RabbitMQ) PublishSimple(message string) {
 			ContentType: "text/plain",
 			Body: []byte(message),
 		})
+	return nil
 }
 
-func (r *RabbitMQ) ConsumeSimple() {
+// ConsumeSimple consumer on simple mode
+func (r *RabbitMQ) ConsumeSimple(
+	orderService service.IOrderService,
+	productService service.IProductService) {
 	//apply for queue
 	_, err := r.channel.QueueDeclare(
 		r.QueueName,
@@ -89,7 +100,8 @@ func (r *RabbitMQ) ConsumeSimple() {
 	msgs, err := r.channel.Consume(
 		  r.QueueName,
 		  "",
-		  true,
+		  //manual response
+		  false,
 		  false,
 		  false,
 		  false,
@@ -98,14 +110,30 @@ func (r *RabbitMQ) ConsumeSimple() {
 	if err != nil {
 		fmt.Println(err)
 	}
-
+	//消费者流量控制，防止爆库
+	r.channel.Qos(
+		1, //一次能接受的最大消费数量
+		0, //服务器最大传递容量
+		false) //true: 对channel可用
 	forever := make(chan bool)
 	//go routine
 	go func() {
 		for d := range msgs {
 			//deal with msgs
 			log.Printf("Received a message: %s", d.Body)
-			fmt.Println(d.Body)
+
+			message := &datamodels.Message{}
+			err := json.Unmarshal([]byte(d.Body), message)
+			if err != nil {
+				fmt.Println(err)
+			}
+			//扣除商品数量
+			err = productService.SubNumberOne(message.ProductID)
+			if err != nil {
+				fmt.Println(err)
+			}
+			//true 表示确认所有未确认消息，false 确认当前消息
+			d.Ack(false)
 		}
 	}()
 

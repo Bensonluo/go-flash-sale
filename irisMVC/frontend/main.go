@@ -7,6 +7,7 @@ import (
 	"go-flash-sale/irisMVC/common"
 	"go-flash-sale/irisMVC/frontend/middleware"
 	"go-flash-sale/irisMVC/frontend/web/controllers"
+	"go-flash-sale/irisMVC/rabbitmq"
 	"go-flash-sale/irisMVC/repositories"
 	"go-flash-sale/irisMVC/service"
 )
@@ -38,8 +39,10 @@ func main() {
 	user := repositories.NewUserRepository("user", db)
 	userService := service.NewService(user)
 	userPro := mvc.New(app.Party("/user"))
-	userPro.Register(userService, ctx)
+	userPro.Register(userService)
 	userPro.Handle(new(controllers.UserController))
+
+	rabbitMQ := rabbitmq.NewRabbitMQSimple("goFlashSale")
 
 	order := repositories.NewOrderManagerRepository("order", db)
 	orderService := service.NewOrderService(order)
@@ -50,7 +53,7 @@ func main() {
 	pro := mvc.New(proProduct)
 	proProduct.Use(middleware.AuthConProduct)
 
-	pro.Register(productService, orderService)
+	pro.Register(productService, orderService, ctx, rabbitMQ)
 	pro.Handle(new(controllers.ProductController))
 
 	app.Run(

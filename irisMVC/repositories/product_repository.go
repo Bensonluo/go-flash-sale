@@ -14,6 +14,7 @@ type IProduct interface {
 	Update(*datamodels.Product) error
 	FindByKey(int64)(*datamodels.Product, error)
 	FindAll()([]*datamodels.Product, error)
+	SubProductNum (productID int64) error
 }
 
 type ProductManager struct {
@@ -22,7 +23,7 @@ type ProductManager struct {
 }
 
 func NewProductManager(table string, db *sql.DB) IProduct {
-	return &ProductManager{ table: table, mysqlConn: db }
+	return &ProductManager{table: table, mysqlConn: db}
 }
 
 func (p *ProductManager) Conn()(err error) {
@@ -44,8 +45,8 @@ func (p *ProductManager) Insert(product *datamodels.Product) (productID int64, e
 		return
 	}
 
-	sql :="INSERT product SET productName=?, productPrice=?, productNum=?, productImage=?, productUrl=?"
-	stmt,errSql := p.mysqlConn.Prepare(sql)
+	sqlCom :="INSERT product SET productName=?, productPrice=?, productNum=?, productImage=?, productUrl=?"
+	stmt,errSql := p.mysqlConn.Prepare(sqlCom)
 	defer stmt.Close()
 	if errSql !=nil {
 		return 0, errSql
@@ -149,4 +150,18 @@ func (p *ProductManager)FindAll()(productArray []*datamodels.Product,errProduct 
 		productArray = append(productArray, product)
 	}
 	return
+}
+
+func (p *ProductManager) SubProductNum(productID int64) error {
+	if err:=p.Conn(); err!=nil {
+		return err
+	}
+	sqlCommand := "update " + p.table + " set productNum=productNum-1 where ID=" + strconv.FormatInt(productID, 10)
+	stmt, err := p.mysqlConn.Prepare(sqlCommand)
+
+	if err!=nil {
+		return err
+	}
+	_, err = stmt.Exec()
+	return err
 }
