@@ -8,17 +8,17 @@ import (
 )
 
 type IProduct interface {
-	Conn()(error)
-	Insert(*datamodels.Product)(int64, error)
+	Conn() error
+	Insert(*datamodels.Product) (int64, error)
 	Delete(int64) bool
 	Update(*datamodels.Product) error
-	FindByKey(int64)(*datamodels.Product, error)
-	FindAll()([]*datamodels.Product, error)
-	SubProductNum (productID int64) error
+	FindByKey(int64) (*datamodels.Product, error)
+	FindAll() ([]*datamodels.Product, error)
+	SubProductNum(productID int64) error
 }
 
 type ProductManager struct {
-	table string
+	table     string
 	mysqlConn *sql.DB
 }
 
@@ -26,7 +26,7 @@ func NewProductManager(table string, db *sql.DB) IProduct {
 	return &ProductManager{table: table, mysqlConn: db}
 }
 
-func (p *ProductManager) Conn()(err error) {
+func (p *ProductManager) Conn() (err error) {
 	if p.mysqlConn == nil {
 		mysql, err := common.NewMysqlConn()
 		if err != nil {
@@ -41,14 +41,14 @@ func (p *ProductManager) Conn()(err error) {
 }
 
 func (p *ProductManager) Insert(product *datamodels.Product) (productID int64, err error) {
-	if err=p.Conn(); err != nil {
+	if err = p.Conn(); err != nil {
 		return
 	}
 
-	sqlCom :="INSERT product SET productName=?, productPrice=?, productNum=?, productImage=?, productUrl=?"
-	stmt,errSql := p.mysqlConn.Prepare(sqlCom)
+	sqlCom := "INSERT product SET productName=?, productPrice=?, productNum=?, productImage=?, productUrl=?"
+	stmt, errSql := p.mysqlConn.Prepare(sqlCom)
 	defer stmt.Close()
-	if errSql !=nil {
+	if errSql != nil {
 		return 0, errSql
 	}
 
@@ -82,13 +82,12 @@ func (p *ProductManager) Delete(productID int64) bool {
 	return true
 }
 
-
-func (p *ProductManager)Update(product *datamodels.Product) error {
-	if err := p.Conn(); err != nil{
+func (p *ProductManager) Update(product *datamodels.Product) error {
+	if err := p.Conn(); err != nil {
 		return err
 	}
 
-	sql := "Update product set productName=?,productNum=?,productPrice=?,productImage=?,productUrl=? where ID=" + strconv.FormatInt(product.ID,10)
+	sql := "Update product set productName=?,productNum=?,productPrice=?,productImage=?,productUrl=? where ID=" + strconv.FormatInt(product.ID, 10)
 	stmt, err := p.mysqlConn.Prepare(sql)
 	defer stmt.Close()
 	if err != nil {
@@ -107,12 +106,11 @@ func (p *ProductManager)Update(product *datamodels.Product) error {
 	return nil
 }
 
-
-func (p *ProductManager) FindByKey(productID int64) (productResult *datamodels.Product,err error) {
-	if err = p.Conn(); err != nil{
+func (p *ProductManager) FindByKey(productID int64) (productResult *datamodels.Product, err error) {
+	if err = p.Conn(); err != nil {
 		return &datamodels.Product{}, err
 	}
-	sql := "Select * from " + p.table + " where ID =" + strconv.FormatInt(productID,10)
+	sql := "Select * from " + p.table + " where ID =" + strconv.FormatInt(productID, 10)
 	row, errRow := p.mysqlConn.Query(sql)
 	defer row.Close()
 	if errRow != nil {
@@ -127,14 +125,13 @@ func (p *ProductManager) FindByKey(productID int64) (productResult *datamodels.P
 	return
 }
 
-
-func (p *ProductManager)FindAll()(productArray []*datamodels.Product,errProduct error){
-	if err := p.Conn(); err != nil{
+func (p *ProductManager) FindAll() (productArray []*datamodels.Product, errProduct error) {
+	if err := p.Conn(); err != nil {
 		return nil, err
 	}
 	sql := "Select * from " + p.table
 	rows, err := p.mysqlConn.Query(sql)
-	defer  rows.Close()
+	defer rows.Close()
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +141,7 @@ func (p *ProductManager)FindAll()(productArray []*datamodels.Product,errProduct 
 		return nil, nil
 	}
 
-	for _,v := range result{
+	for _, v := range result {
 		product := &datamodels.Product{}
 		common.DataToStructByTagSql(v, product)
 		productArray = append(productArray, product)
@@ -153,13 +150,13 @@ func (p *ProductManager)FindAll()(productArray []*datamodels.Product,errProduct 
 }
 
 func (p *ProductManager) SubProductNum(productID int64) error {
-	if err:=p.Conn(); err!=nil {
+	if err := p.Conn(); err != nil {
 		return err
 	}
 	sqlCommand := "update " + p.table + " set productNum=productNum-1 where ID=" + strconv.FormatInt(productID, 10)
 	stmt, err := p.mysqlConn.Prepare(sqlCommand)
 
-	if err!=nil {
+	if err != nil {
 		return err
 	}
 	_, err = stmt.Exec()

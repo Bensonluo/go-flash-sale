@@ -11,14 +11,13 @@ import (
 	"go-flash-sale/irisMVC/service"
 )
 
-
 func main() {
 	app := iris.New()
 	app.Logger().SetLevel("debug")
 
 	template := iris.HTML("./irisMVC/backend/web/views", ".html").Layout(
 		"shared/layout.html").Reload(
-			true)
+		true)
 	app.RegisterView(template)
 	app.HandleDir("/assets", iris.Dir("./irisMVC/backend/web/assets"))
 	app.OnAnyErrorCode(func(ctx iris.Context) {
@@ -54,7 +53,7 @@ func main() {
 		iris.Addr("localhost:8080"),
 		iris.WithoutServerError(iris.ErrServerClosed),
 		iris.WithOptimizations,
-		)
+	)
 	if err != nil {
 		app.Logger().Print("Running error")
 		app.Logger().Print(err)

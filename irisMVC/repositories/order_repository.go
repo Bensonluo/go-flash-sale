@@ -7,25 +7,22 @@ import (
 	"strconv"
 )
 
-
-type IOrderRepository interface{
+type IOrderRepository interface {
 	Conn() error
 	Insert(*datamodels.Order) (int64, error)
 	Delete(int64) bool
 	Update(*datamodels.Order) error
-	SelectByKey (int64) (*datamodels.Order, error)
+	SelectByKey(int64) (*datamodels.Order, error)
 	SelectAll() ([]*datamodels.Order, error)
 	SelectAllWithInfo() (map[int]map[string]string, error)
 }
 
-
 func NewOrderManagerRepository(table string, sql *sql.DB) IOrderRepository {
-		return &OrderManagerRepository{table: table, mysqlConn: sql}
+	return &OrderManagerRepository{table: table, mysqlConn: sql}
 }
 
-
 type OrderManagerRepository struct {
-	table string
+	table     string
 	mysqlConn *sql.DB
 }
 
@@ -93,7 +90,7 @@ func (o *OrderManagerRepository) Update(order *datamodels.Order) (err error) {
 	return
 }
 
-func (o *OrderManagerRepository) SelectByKey (orderId int64) (order *datamodels.Order, err error) {
+func (o *OrderManagerRepository) SelectByKey(orderId int64) (order *datamodels.Order, err error) {
 	if errConn := o.Conn(); errConn != nil {
 		return &datamodels.Order{}, errConn
 	}
@@ -112,22 +109,22 @@ func (o *OrderManagerRepository) SelectByKey (orderId int64) (order *datamodels.
 	return
 }
 
-func (o *OrderManagerRepository)SelectAll ()(orderArray []*datamodels.Order,err error)  {
+func (o *OrderManagerRepository) SelectAll() (orderArray []*datamodels.Order, err error) {
 	if errConn := o.Conn(); errConn != nil {
 		return nil, errConn
 	}
 	sqlS := "Select * from " + o.table
-	rows ,errRows := o.mysqlConn.Query(sqlS)
+	rows, errRows := o.mysqlConn.Query(sqlS)
 	defer rows.Close()
 	if errRows != nil {
 		return nil, errRows
 	}
 	result := common.GetResultRows(rows)
 	if len(result) == 0 {
-		return nil ,err
+		return nil, err
 	}
 
-	for _, v := range result{
+	for _, v := range result {
 		order := &datamodels.Order{}
 		common.DataToStructByTagSql(v, order)
 		orderArray = append(orderArray, order)

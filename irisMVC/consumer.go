@@ -25,4 +25,3 @@ func main() {
 	rabbitmqConsumeSimple := rabbitmq.NewRabbitMQSimple("goFlashSale")
 	rabbitmqConsumeSimple.ConsumeSimple(orderService, productService)
 }
-

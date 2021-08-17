@@ -11,13 +11,13 @@ func NewMysqlConn() (db *sql.DB, err error) {
 	return
 }
 
-func GetResultRow(rows *sql.Rows) map[string]string{
+func GetResultRow(rows *sql.Rows) map[string]string {
 	columns, _ := rows.Columns()
 	scanArgs := make([]interface{}, len(columns))
 	values := make([][]byte, len(columns))
 	for j := range values {
 		scanArgs[j] = &values[j]
-	}	
+	}
 	record := make(map[string]string)
 	for rows.Next() {
 		rows.Scan(scanArgs...)

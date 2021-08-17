@@ -13,21 +13,21 @@ import (
 const MQURL = "amqp://admin:admin@127.0.0.1:5672/Bensonl"
 
 type RabbitMQ struct {
-	conn *amqp.Connection
-	channel *amqp.Channel
+	conn      *amqp.Connection
+	channel   *amqp.Channel
 	QueueName string
-	Exchange string
-	Key string
-	Mqurl string
+	Exchange  string
+	Key       string
+	Mqurl     string
 	sync.Mutex
 }
 
 func NewRabbitMQ(queueName string, exchange string, key string) *RabbitMQ {
-	rabbitmq := &RabbitMQ {
+	rabbitmq := &RabbitMQ{
 		QueueName: queueName,
-		Exchange: exchange,
-		Key: key,
-		Mqurl: MQURL,
+		Exchange:  exchange,
+		Key:       key,
+		Mqurl:     MQURL,
 	}
 	var err error
 	rabbitmq.conn, err = amqp.Dial(rabbitmq.Mqurl)
@@ -50,11 +50,12 @@ func (r *RabbitMQ) failOnError(err error, message string) {
 }
 
 func NewRabbitMQSimple(queueName string) *RabbitMQ {
-	return NewRabbitMQ(queueName, "",  "")
+	return NewRabbitMQ(queueName, "", "")
 
 }
 
 func (r *RabbitMQ) PublishSimple(message string) error {
+	//生产加锁
 	r.Lock()
 	defer r.Unlock()
 	//apply for queue
@@ -76,7 +77,7 @@ func (r *RabbitMQ) PublishSimple(message string) error {
 		false,
 		amqp.Publishing{
 			ContentType: "text/plain",
-			Body: []byte(message),
+			Body:        []byte(message),
 		})
 	return nil
 }
@@ -98,22 +99,22 @@ func (r *RabbitMQ) ConsumeSimple(
 	}
 
 	msgs, err := r.channel.Consume(
-		  r.QueueName,
-		  "",
-		  //manual response
-		  false,
-		  false,
-		  false,
-		  false,
-		  nil)
+		r.QueueName,
+		"",
+		//manual response
+		false,
+		false,
+		false,
+		false,
+		nil)
 
 	if err != nil {
 		fmt.Println(err)
 	}
 	//消费者流量控制，防止爆库
 	r.channel.Qos(
-		1, //一次能接受的最大消费数量
-		0, //服务器最大传递容量
+		1,     //一次能接受的最大消费数量
+		0,     //服务器最大传递容量
 		false) //true: 对channel可用
 	forever := make(chan bool)
 	//go routine
@@ -137,7 +138,7 @@ func (r *RabbitMQ) ConsumeSimple(
 		}
 	}()
 
-	log.Printf("[*] waiting for messages, To exit, press CTRL + C" )
+	log.Printf("[*] waiting for messages, To exit, press CTRL + C")
 	<-forever
 }
 
@@ -227,21 +228,19 @@ func (r *RabbitMQ) ReceiveSub() {
 	<-forever
 }
 
-
-func NewRabbitMQRouting(exchangeName string,routingKey string) *RabbitMQ {
-	rabbitmq := NewRabbitMQ("",exchangeName,routingKey)
+func NewRabbitMQRouting(exchangeName string, routingKey string) *RabbitMQ {
+	rabbitmq := NewRabbitMQ("", exchangeName, routingKey)
 	var err error
 
 	rabbitmq.conn, err = amqp.Dial(rabbitmq.Mqurl)
-	rabbitmq.failOnError(err,"failed to connect rabbitmq!")
+	rabbitmq.failOnError(err, "failed to connect rabbitmq!")
 
 	rabbitmq.channel, err = rabbitmq.conn.Channel()
 	rabbitmq.failOnError(err, "failed to open a channel")
 	return rabbitmq
 }
 
-
-func (r *RabbitMQ) PublishRouting(message string )  {
+func (r *RabbitMQ) PublishRouting(message string) {
 	err := r.channel.ExchangeDeclare(
 		r.Exchange,
 		"direct", //required
@@ -315,20 +314,19 @@ func (r *RabbitMQ) ReceiveRouting() {
 	<-forever
 }
 
-
-func NewRabbitMQTopic(exchangeName string,routingKey string) *RabbitMQ {
-	rabbitmq := NewRabbitMQ("",exchangeName,routingKey)
+func NewRabbitMQTopic(exchangeName string, routingKey string) *RabbitMQ {
+	rabbitmq := NewRabbitMQ("", exchangeName, routingKey)
 	var err error
 
 	rabbitmq.conn, err = amqp.Dial(rabbitmq.Mqurl)
-	rabbitmq.failOnError(err,"failed to connect rabbitmq!")
+	rabbitmq.failOnError(err, "failed to connect rabbitmq!")
 
 	rabbitmq.channel, err = rabbitmq.conn.Channel()
 	rabbitmq.failOnError(err, "failed to open a channel")
 	return rabbitmq
 }
 
-func (r *RabbitMQ) PublishTopic(message string )  {
+func (r *RabbitMQ) PublishTopic(message string) {
 
 	err := r.channel.ExchangeDeclare(
 		r.Exchange,
@@ -342,7 +340,6 @@ func (r *RabbitMQ) PublishTopic(message string )  {
 
 	r.failOnError(err, "Failed to declare")
 
-
 	err = r.channel.Publish(
 		r.Exchange,
 		r.Key, //key
@@ -353,7 +350,6 @@ func (r *RabbitMQ) PublishTopic(message string )  {
 			Body:        []byte(message),
 		})
 }
-
 
 //use * to match single word and # to match mutiple words
 func (r *RabbitMQ) RecieveTopic() {
@@ -385,7 +381,6 @@ func (r *RabbitMQ) RecieveTopic() {
 		r.Exchange,
 		false,
 		nil)
-
 
 	messages, err := r.channel.Consume(
 		q.Name,

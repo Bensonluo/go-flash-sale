@@ -15,17 +15,17 @@ import (
 )
 
 type ProductController struct {
-	Ctx iris.Context
+	Ctx            iris.Context
 	ProductService service.IProductService
-	OrderService service.IOrderService
-	Session *sessions.Session
-	RabbitMQ *rabbitmq.RabbitMQ
+	OrderService   service.IOrderService
+	Session        *sessions.Session
+	RabbitMQ       *rabbitmq.RabbitMQ
 }
 
 var (
-	htmlOutPath = "./irisMVC/frontend/web/htmlProductShow/"
+	htmlOutPath  = "./irisMVC/frontend/web/htmlProductShow/"
 	templatePath = "./irisMVC/frontend/web/views/template/" //static files
-	)
+)
 
 func (p *ProductController) GetGenerateHtml() {
 	contentTmp, err := template.ParseFiles(filepath.Join(templatePath, "product.html"))
@@ -63,7 +63,7 @@ func generateStaticHtml(ctx iris.Context, template *template.Template, fileName 
 
 func isExist(fileName string) bool {
 	_, err := os.Stat(fileName)
-	return err==nil || os.IsExist(err)
+	return err == nil || os.IsExist(err)
 }
 
 func (p *ProductController) GetDetail() mvc.View {
@@ -72,9 +72,9 @@ func (p *ProductController) GetDetail() mvc.View {
 		p.Ctx.Application().Logger().Error(err)
 	}
 	return mvc.View{
-		Layout:"shared/productLayout.html",
-		Name:"product/view.html",
-		Data:iris.Map{
+		Layout: "shared/productLayout.html",
+		Name:   "product/view.html",
+		Data: iris.Map{
 			"product": product,
 		},
 	}

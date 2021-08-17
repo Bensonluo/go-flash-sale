@@ -41,7 +41,7 @@ type Consistent struct {
 //default nodes
 func NewConsistent() *Consistent {
 	return &Consistent{
-		circle: make(map[uint32]string),
+		circle:      make(map[uint32]string),
 		VirtualNode: 20,
 	}
 }

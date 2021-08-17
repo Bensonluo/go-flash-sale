@@ -1,14 +1,14 @@
 package datamodels
 
 type Order struct {
-	ID int64 `sql:"ID"`
-	UserId int64 `sql:"userId"`
-	ProductId int64 `sql:"productId"`
-	OrderStatus int `sql:"orderStatus"`
+	ID          int64 `sql:"ID"`
+	UserId      int64 `sql:"userId"`
+	ProductId   int64 `sql:"productId"`
+	OrderStatus int   `sql:"orderStatus"`
 }
 
-const(
-	OrderWait = iota
+const (
+	OrderWait    = iota
 	OrderSuccess //1
-	OrderFailed //2
+	OrderFailed  //2
 )

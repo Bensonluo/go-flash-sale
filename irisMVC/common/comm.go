@@ -56,4 +56,3 @@ func TypeConversion(value string, ntype string) (reflect.Value, error) {
 	//else if .......
 	return reflect.ValueOf(value), errors.New("unknown type：" + ntype)
 }
-
