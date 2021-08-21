@@ -11,3 +11,18 @@ services:
       - MYSQL_PASSWORD=bensonl
       - MYSQL_DATABASE=sales
       - MYSQL_ROOT_PASSWORD=root
+
+  rabbitmq:
+    container_name: go-rabbitmq
+    image: rabbitmq:management
+    ports:
+      - 15672:15672
+      - 5672:5672
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=admin
+    networks:
+      - basic
+
+networks:
+  basic:
